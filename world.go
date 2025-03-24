@@ -13,9 +13,11 @@ type World struct {
 	componentPools     map[reflect.Type]ComponentPooler //<Type, componentPool>
 	compTypeIndexPools map[int]ComponentPooler          //<typeIndex, componentPool>
 
-	filters               map[string]IFilter //<FilterTypeName, filter>
-	filterByIncludedComps map[int][]IFilter  //<typeIndex, []filter> //key是所需comp的typeIndex
-	filterByExcludedComps map[int][]IFilter  //<typeIndex, []filter> //key是排斥的comp的typeIndex
+	filters      map[string]IFilter      //<FilterTypeName, filter>
+	groupFilters map[string]IGroupFilter //<FilterTypeName, filter>
+
+	filterByIncludedComps map[int][]IFilter //<typeIndex, []filter> //key是所需comp的typeIndex
+	filterByExcludedComps map[int][]IFilter //<typeIndex, []filter> //key是排斥的comp的typeIndex
 
 	groupKeyEventReceivers map[int][]groupKeyEvent //<typeIndex, []handler> //key是comp的typeIndex
 }
@@ -26,7 +28,9 @@ func NewWorld() *World {
 		componentPools:     make(map[reflect.Type]ComponentPooler),
 		compTypeIndexPools: make(map[int]ComponentPooler),
 
-		filters:               make(map[string]IFilter),
+		filters:      make(map[string]IFilter),
+		groupFilters: make(map[string]IGroupFilter),
+
 		filterByIncludedComps: make(map[int][]IFilter),
 		filterByExcludedComps: make(map[int][]IFilter),
 
@@ -58,10 +62,10 @@ func (w *World) freeEntityData(idx int) {
 	entityData.Gen = gen
 }
 
-func (w *World) isCurrentEntityData(entity Entity) bool {
-	entityData := w.entityPool.GetRef(entity.Id)
-	return entityData.Gen == entity.Gen
-}
+//func (w *World) isCurrentEntityData(entity Entity) bool {
+//	entityData := w.entityPool.GetRef(entity.Id)
+//	return entityData.Gen == entity.Gen
+//}
 
 func getComponentPool[T any](w *World) ComponentPooler {
 	t := reflect.TypeOf((*T)(nil)).Elem()
@@ -149,6 +153,23 @@ func RegisterFilter[T IFilter](w *World, filter T) T {
 	return filter
 }
 
+func RegisterGroupFilter[T IGroupFilter](w *World, filter T) T {
+	t := reflect.TypeOf(filter)
+	if t.Kind() != reflect.Pointer {
+		panic("filter must be a pointer")
+	}
+
+	t = t.Elem()
+	filterName := t.Name()
+	_, ok := w.groupFilters[filterName]
+	if ok {
+		panic("repeat register filter")
+	}
+
+	w.groupFilters[filterName] = filter
+	return filter
+}
+
 func GetFilter[T IFilter](w *World) T {
 	var dt T
 	t := reflect.TypeOf(dt)
@@ -159,6 +180,22 @@ func GetFilter[T IFilter](w *World) T {
 	t = t.Elem()
 	filterName := t.Name()
 	filter, ok := w.filters[filterName]
+	if !ok {
+		panic(fmt.Sprintf("filter:%s not registered", filterName))
+	}
+	return filter.(T)
+}
+
+func GetGroupFilter[T IGroupFilter](w *World) T {
+	var dt T
+	t := reflect.TypeOf(dt)
+	if t.Kind() != reflect.Pointer {
+		panic("filter must be a pointer")
+	}
+
+	t = t.Elem()
+	filterName := t.Name()
+	filter, ok := w.groupFilters[filterName]
 	if !ok {
 		panic(fmt.Sprintf("filter:%s not registered", filterName))
 	}
