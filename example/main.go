@@ -11,11 +11,21 @@ func main() {
 	world := ecs.NewWorld()
 	initFilters(world)
 
+	//筛选所有正常人，有身份证、名字、年龄，但不会飞、不能在水里呼吸
+	humanFilter := ecs.GetFilter[*ecs.Filter3Exclude2[IdCardComponent, NameComponent, AgeComponent, FlyComponent, BreathInWaterComponent]](world)
+	//监听humanFilter里的entity变化
+	humanFilter.AddListener(&humanFilterListener{})
+	humanFilter.OnAdd(func(entity ecs.Entity) {
+		idCard := ecs.Get[IdCardComponent](entity)
+		name := ecs.Get[NameComponent](entity)
+		fmt.Printf("    -human entity:%+v add, id:%+v, name:%+v\n", entity, idCard, name)
+	})
+
 	//生成entity，并添加组件
-	spawnHuman(world, 9527, 123456, "浙江", 0, "雷雷", 25)
-	spawnHuman(world, 9381, 567890, "湖北", 1, "香香", 18)
-	spawnHuman(world, 9382, 567891, "湖北", 1, "不香", 20)
-	spawnHuman(world, 9383, 567892, "湖北", 0, "香香", 25)
+	leilei := spawnHuman(world, 9527, 123456, "浙江", 0, "雷雷", 25)
+	xx := spawnHuman(world, 9381, 567890, "湖北", 1, "香香", 18)
+	bx := spawnHuman(world, 9382, 567891, "湖北", 1, "不香", 20)
+	xx2 := spawnHuman(world, 9383, 567892, "湖北", 0, "香香", 25)
 	spawnBird(world, "啄木鸟")
 	spawnBird(world, "麻雀")
 	spawnFish(world, "鲸鱼")
@@ -63,8 +73,6 @@ func main() {
 		fmt.Printf("entity:%+v, can flying\n", entity)
 	})
 	fmt.Println("---------------------")
-	//筛选所有正常人，有身份证、名字、年龄，但不会飞、不能在水里呼吸
-	humanFilter := ecs.GetFilter[*ecs.Filter3Exclude2[IdCardComponent, NameComponent, AgeComponent, FlyComponent, BreathInWaterComponent]](world)
 	humanFilter.Foreach(func(entity ecs.Entity, idCard IdCardComponent, name NameComponent, age AgeComponent) {
 		fmt.Printf("entity:%+v, human, idCard:%+v, name:%+v, age:%+v\n", entity, idCard, name, age)
 	})
@@ -76,6 +84,20 @@ func main() {
 	if ok {
 		fmt.Printf("entity:%+v, human, id:%+v, name:%+v, age:%+v\n", entity, ecs.Get[IdCardComponent](entity), ecs.Get[NameComponent](entity), ecs.Get[AgeComponent](entity))
 	}
+	fmt.Println("after changing xx's id ---------------------")
+	ecs.Replace(xx, IdCardComponent{9681, 567890, "湖北"})
+	entity, ok = idGroupFilter.FindOne(9381)
+	if ok {
+		fmt.Printf("entity:%+v, human, id:%+v, name:%+v, age:%+v\n", entity, ecs.Get[IdCardComponent](entity), ecs.Get[NameComponent](entity), ecs.Get[AgeComponent](entity))
+	} else {
+		fmt.Printf("not find id=9381\n")
+	}
+	entity, ok = idGroupFilter.FindOne(9681)
+	if ok {
+		fmt.Printf("entity:%+v, human, id:%+v, name:%+v, age:%+v\n", entity, ecs.Get[IdCardComponent](entity), ecs.Get[NameComponent](entity), ecs.Get[AgeComponent](entity))
+	} else {
+		fmt.Printf("not find id=9681\n")
+	}
 	fmt.Println("---------------------")
 	//检索所有省份为湖北、性别为0的人
 	xxGroupFilter := ecs.GetGroupFilter[*ecs.GroupFilter2WithKeyMapper[IdCardComponent, GenderComponent, string, int, IdCardGroupProvinceMapper, GenderGroupMapper]](world)
@@ -83,6 +105,25 @@ func main() {
 		fmt.Printf("entity:%+v, human, id:%+v, gender:%+v, name:%+v, age:%+v\n",
 			entity, ecs.Get[IdCardComponent](entity), ecs.Get[GenderComponent](entity), ecs.Get[NameComponent](entity), ecs.Get[AgeComponent](entity))
 	})
+
+	fmt.Println("going to destroy ---------------------")
+	leilei.Destroy()
+	ecs.Del[IdCardComponent](xx2)
+	xx2.Destroy()
+	ecs.Del[AgeComponent](bx)
+	xx.Destroy()
+}
+
+type humanFilterListener struct{}
+
+func (h *humanFilterListener) OnEntityAdded(entity ecs.Entity) {
+	idCard := ecs.Get[IdCardComponent](entity)
+	name := ecs.Get[NameComponent](entity)
+	fmt.Printf("    =human entity:%+v add, id:%+v, name:%+v\n", entity, idCard, name)
+}
+
+func (h *humanFilterListener) OnEntityRemoved(entity ecs.Entity) {
+	fmt.Printf("    =human entity:%+v remove\n", entity)
 }
 
 func testNewEntity(world *ecs.World) {

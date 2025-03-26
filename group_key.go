@@ -34,12 +34,15 @@ func (g *groupKeyEventProxy) onGroupKeyEvent(eventKind groupKeyEventKind, entity
 	}
 }
 
+// 键值生成器：从Entity中提取Key
 type groupKeyMaker[Key comparable] interface {
 	makeKey(Entity) Key
 }
 
+// 实现groupKeyMaker[KeyComp]接口
 type DirectlyKeyMaker[KeyComp comparable] struct{}
 
+// 直接将entity的KeyComp组件数据作为key
 func (d DirectlyKeyMaker[KeyComp]) makeKey(entity Entity) KeyComp {
 	return *Get[KeyComp](entity)
 }
@@ -65,14 +68,18 @@ func (d Directly3KeyMaker[KeyComp1, KeyComp2, KeyComp3]) makeKey(entity Entity) 
 	return Multi3Key[KeyComp1, KeyComp2, KeyComp3]{*Get[KeyComp1](entity), *Get[KeyComp2](entity), *Get[KeyComp3](entity)}
 }
 
+// 接口功能：将Source转换为Key
 type IGroupKeyMap[Source any, Key comparable] interface {
 	MapKey(Source) Key
 }
 
+// 将Source转换为Key的键值生成器
+// 实现groupKeyMaker[Key]接口
 type groupKeyMapper[Source any, Key comparable, Mapper IGroupKeyMap[Source, Key]] struct {
 	mapper Mapper
 }
 
+// 直接将entity的Source组件数据，通过指定的mapper转化为key
 func (g groupKeyMapper[Source, Key, Mapper]) makeKey(entity Entity) Key {
 	return g.mapper.MapKey(*Get[Source](entity))
 }

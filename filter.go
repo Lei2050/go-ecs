@@ -1,5 +1,6 @@
 package ecs
 
+// Filter1[Comp1 any] 提供给用户使用的过滤器，用于筛选持有 Comp1 组件的Entity
 type Filter1[Comp1 any] struct {
 	*filterBase1[Comp1]
 }
@@ -10,6 +11,9 @@ func NewFilter1[Comp1 any](world *World) *Filter1[Comp1] {
 	}
 }
 
+// Filter1[Comp1, ExcComp1 any] 提供给用户使用的过滤器，用于筛选持有Comp1、但不持有ExcComp1的Entity
+// 即实现Filter<Comp1>.Exclude<ExcComp1>
+// 后续的FilterNExcludeM都类似，不再赘述。
 type Filter1Exclude1[Comp1, ExcComp1 any] struct {
 	*filterBase1[Comp1]
 }
@@ -22,6 +26,7 @@ func NewFilter1Exclude[Comp1, ExcComp1 any](world *World) *Filter1Exclude1[Comp1
 	return f
 }
 
+// 实现Filter<Comp1>.Exclude<ExcComp1, ExcComp2>
 type Filter1Exclude2[Comp1, ExcComp1, ExcComp2 any] struct {
 	*filterBase1[Comp1]
 }
@@ -274,6 +279,7 @@ func NewFilter4Exclude3[Comp1, Comp2, Comp3, Comp4, ExcComp1, ExcComp2, ExcComp3
 	return f
 }
 
+// 实现Filter<Comp1, Comp2, Comp3, Comp4>.Exclude<ExcComp1, ExcComp2, ExcComp3, ExcComp4>
 type Filter4Exclude4[Comp1, Comp2, Comp3, Comp4, ExcComp1, ExcComp2, ExcComp3, ExcComp4 any] struct {
 	*filterBase4[Comp1, Comp2, Comp3, Comp4]
 }
