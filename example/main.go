@@ -21,6 +21,34 @@ func main() {
 		fmt.Printf("    -human entity:%+v add, id:%+v, name:%+v\n", entity, idCard, name)
 	})
 
+	//监听IdCardComponent变化
+	registerCompChangeEvent[IdCardComponent](func(e ecs.Entity) {
+		fmt.Printf("    EVENT: beforeAdd IdCardComponent entity:%+v change\n", e)
+	},
+		nil,
+		//func(e ecs.Entity) {
+		//	fmt.Printf("    EVENT: afterAdd IdCardComponent entity:%+v change\n", e)
+		//},
+		func(e ecs.Entity) {
+			fmt.Printf("    EVENT: beforeUpdate IdCardComponent entity:%+v change\n", e)
+		},
+		func(e ecs.Entity) {
+			fmt.Printf("    EVENT: beforeDelete IdCardComponent entity:%+v change\n", e)
+		},
+		func(e ecs.Entity) {
+			fmt.Printf("    EVENT: afterDelete IdCardComponent entity:%+v change\n", e)
+		},
+		//func(e ecs.Entity, params ...any) {
+		//	compPoolIdx := params[0].(int)
+		//	fmt.Printf("    EVENT: beforeAddWithPoolIdx IdCardComponent entity:%+v change, compPoolIdx:%+v\n", e, compPoolIdx)
+		//},
+		nil,
+		func(e ecs.Entity, params ...any) {
+			compPoolIdx := params[0].(int)
+			fmt.Printf("    EVENT: afterAddWithPoolIdx IdCardComponent entity:%+v change, compPoolIdx:%+v\n", e, compPoolIdx)
+		},
+	)
+
 	//生成entity，并添加组件
 	leilei := spawnHuman(world, 9527, 123456, "浙江", 0, "雷雷", 25)
 	xx := spawnHuman(world, 9381, 567890, "湖北", 1, "香香", 18)

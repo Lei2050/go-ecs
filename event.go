@@ -26,6 +26,32 @@ func (d *Delegate) Invoke(entity Entity) {
 	}
 }
 
+type DelegateWithParam struct {
+	callbacks []func(Entity, ...any)
+}
+
+func (d *DelegateWithParam) AddCallback(callback func(Entity, ...any)) {
+	d.callbacks = append(d.callbacks, callback)
+}
+
+func (d *DelegateWithParam) RemoveCallback(callback func(Entity, ...any)) {
+	pf := reflect.ValueOf(callback).Pointer()
+	for i, cb := range d.callbacks {
+		if reflect.ValueOf(cb).Pointer() == pf {
+			d.callbacks = append(d.callbacks[:i], d.callbacks[i+1:]...)
+			break
+		}
+	}
+}
+
+func (d *DelegateWithParam) Invoke(entity Entity, params ...any) {
+	for _, cb := range d.callbacks {
+		cb(entity, params...)
+	}
+}
+
+//与Entity有关的各种事件，可以用来监听entity的数据变化。
+//目前主要是用来Component数据的变化。
 type EntityEvents struct {
 	BeforeAdd Delegate
 	AfterAdd  Delegate
@@ -34,6 +60,9 @@ type EntityEvents struct {
 
 	BeforeDelete Delegate
 	AfterDelete  Delegate
+
+	BeforeAddWithPoolIdx DelegateWithParam
+	AfterAddWithPoolIdx  DelegateWithParam
 }
 
 type FilterEventListener interface {

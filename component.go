@@ -25,7 +25,7 @@ type ComponentType struct {
 	Flag uint64
 	// 对象池的段大小，这个参数开放给上层好像很迷惑
 	PoolSegmentSize int
-	// 与该组件相关的事件 TODO 暂时没用到
+	// 与该组件变更的相关事件，外部可以通过它来监听具体组件的变更
 	Events EntityEvents
 }
 

@@ -85,3 +85,47 @@ func (AgeComponent) MapKey(age AgeComponent) int {
 
 // super man
 type ImmortalComponent struct{}
+
+/*
+	BeforeAdd Delegate
+	AfterAdd  Delegate
+
+	BeforeUpdate Delegate
+
+	BeforeDelete Delegate
+	AfterDelete  Delegate
+
+	BeforeAddWithPoolIdx DelegateWithParam
+	AfterAddWithPoolIdx  DelegateWithParam
+*/
+func registerCompChangeEvent[T any](beforeAdd func(ecs.Entity),
+	afterAdd func(ecs.Entity),
+	beforeUpdate func(ecs.Entity),
+	beforeDelete func(ecs.Entity),
+	afterDelete func(ecs.Entity),
+	beforeAddWithPoolIdx func(ecs.Entity, ...any),
+	afterAddWithPoolIdx func(ecs.Entity, ...any),
+) {
+	componentType := ecs.GetComponentType[T]()
+	if beforeAdd != nil {
+		componentType.Events.BeforeAdd.AddCallback(beforeAdd)
+	}
+	if afterAdd != nil {
+		componentType.Events.AfterAdd.AddCallback(afterAdd)
+	}
+	if beforeUpdate != nil {
+		componentType.Events.BeforeUpdate.AddCallback(beforeUpdate)
+	}
+	if beforeDelete != nil {
+		componentType.Events.BeforeDelete.AddCallback(beforeDelete)
+	}
+	if afterDelete != nil {
+		componentType.Events.AfterDelete.AddCallback(afterDelete)
+	}
+	if beforeAddWithPoolIdx != nil {
+		componentType.Events.BeforeAddWithPoolIdx.AddCallback(beforeAddWithPoolIdx)
+	}
+	if afterAddWithPoolIdx != nil {
+		componentType.Events.AfterAddWithPoolIdx.AddCallback(afterAddWithPoolIdx)
+	}
+}

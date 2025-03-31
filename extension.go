@@ -80,10 +80,14 @@ func applyComponent[T any](world *World, entity Entity, entityData *EntityData, 
 	entityData.CompIndices[componentType.TypeIndex] = compPoolIdx
 	// 触发组件添加前的事件
 	componentType.Events.BeforeAdd.Invoke(entity)
+	// 触发组件添加前的事件，compPoolIdx可用于有关联的component的快速获取，
+	// 比如典型的ParentComponent，如果是高频调用、可以缓存compPoolIdx以加速获取Parent。
+	componentType.Events.BeforeAddWithPoolIdx.Invoke(entity, compPoolIdx)
 	// 新组件添加，world通知相关过滤器执行更新
 	world.updateFiltersAfterAdd(componentType.TypeIndex, entity, entityData)
 	// 触发组件添加后的事件
 	componentType.Events.AfterAdd.Invoke(entity)
+	componentType.Events.AfterAddWithPoolIdx.Invoke(entity, compPoolIdx)
 }
 
 // TryGet 尝试获取Entity的指定组件。
